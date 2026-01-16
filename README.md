@@ -159,11 +159,12 @@ MAX_THREADS = 10                       # Thread pengujian proxy konkuren
 
 ## Dependensi
 
-```
-yt-dlp>=2024.0.0
-colorama>=0.4.6
-pandas>=2.0.0
-requests>=2.31.0
+```txt
+yt-dlp
+colorama
+pandas
+requests
+certifi
 ```
 
 ---
