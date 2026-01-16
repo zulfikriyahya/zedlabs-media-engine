@@ -2,19 +2,26 @@
 
 Alat CLI Python berkinerja tinggi untuk mengunduh video dan audio dari YouTube, media sosial, dan lebih dari 1000 situs. Dilengkapi dengan dukungan proxy canggih dan antarmuka terminal animasi.
 
+<div align="center">
+<img
+  src="./screenshoot/playlist_mode.png"
+  alt="ZEDLABS YouTube Downloader"
+/>
+</div>
+
 ## Screenshots
 
 ### Single Video Mode
 
-[Single Video/Audio Download](./single_mode.png)
+[Single Video/Audio Download](./screenshoot/single_mode.png)
 
 ### Playlist Mode
 
-[Playlist Video/Audio Download](./playlist_mode.png)
+[Playlist Video/Audio Download](./screenshoot/playlist_mode.png)
 
 ### Proxy Mode
 
-[Proxy System](./proxy_mode.png)
+[Proxy System](./screenshoot/proxy_mode.png)
 
 ## Fitur Utama
 
