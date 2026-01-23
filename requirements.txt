@@ -3,3 +3,5 @@ colorama
 pandas
 requests
 certifi
+flask
+flask-cors

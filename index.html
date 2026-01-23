@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>ZEDLABS YouTube Downloader Pro</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				min-height: 100vh;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 20px;
+			}
+
+			.container {
+				background: rgba(255, 255, 255, 0.95);
+				border-radius: 20px;
+				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+				max-width: 800px;
+				width: 100%;
+				overflow: hidden;
+				animation: slideIn 0.5s ease-out;
+			}
+
+			@keyframes slideIn {
+				from {
+					opacity: 0;
+					transform: translateY(-30px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.header {
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				padding: 30px;
+				text-align: center;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.header::before {
+				content: "";
+				position: absolute;
+				top: -50%;
+				left: -50%;
+				width: 200%;
+				height: 200%;
+				background: radial-gradient(
+					circle,
+					rgba(255, 255, 255, 0.1) 0%,
+					transparent 70%
+				);
+				animation: rotate 20s linear infinite;
+			}
+
+			@keyframes rotate {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			.logo {
+				font-size: 48px;
+				font-weight: bold;
+				letter-spacing: 3px;
+				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+				margin-bottom: 10px;
+				position: relative;
+				z-index: 1;
+			}
+
+			.subtitle {
+				font-size: 14px;
+				opacity: 0.9;
+				letter-spacing: 1px;
+				position: relative;
+				z-index: 1;
+			}
+
+			.content {
+				padding: 40px;
+			}
+
+			.form-group {
+				margin-bottom: 25px;
+			}
+
+			label {
+				display: block;
+				margin-bottom: 8px;
+				font-weight: 600;
+				color: #333;
+				font-size: 14px;
+			}
+
+			input[type="text"],
+			input[type="file"],
+			select {
+				width: 100%;
+				padding: 12px 15px;
+				border: 2px solid #e0e0e0;
+				border-radius: 10px;
+				font-size: 14px;
+				transition: all 0.3s;
+			}
+
+			input[type="text"]:focus,
+			select:focus {
+				outline: none;
+				border-color: #667eea;
+				box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+			}
+
+			.checkbox-group {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 20px;
+			}
+
+			input[type="checkbox"] {
+				width: 20px;
+				height: 20px;
+				cursor: pointer;
+				accent-color: #667eea;
+			}
+
+			.mode-selector {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 15px;
+				margin-bottom: 25px;
+			}
+
+			.mode-option {
+				padding: 20px;
+				border: 2px solid #e0e0e0;
+				border-radius: 10px;
+				text-align: center;
+				cursor: pointer;
+				transition: all 0.3s;
+				background: white;
+			}
+
+			.mode-option:hover {
+				border-color: #667eea;
+				background: #f8f9ff;
+				transform: translateY(-2px);
+			}
+
+			.mode-option.active {
+				border-color: #667eea;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				transform: translateY(-2px);
+				box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+			}
+
+			.mode-icon {
+				font-size: 36px;
+				margin-bottom: 10px;
+			}
+
+			.btn {
+				width: 100%;
+				padding: 15px;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				color: white;
+				border: none;
+				border-radius: 10px;
+				font-size: 16px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.3s;
+				letter-spacing: 1px;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.btn::before {
+				content: "";
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				width: 0;
+				height: 0;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.3);
+				transform: translate(-50%, -50%);
+				transition:
+					width 0.6s,
+					height 0.6s;
+			}
+
+			.btn:hover::before {
+				width: 300px;
+				height: 300px;
+			}
+
+			.btn:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+			}
+
+			.btn:active {
+				transform: translateY(0);
+			}
+
+			.btn:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+
+			.btn span {
+				position: relative;
+				z-index: 1;
+			}
+
+			.progress-container {
+				display: none;
+				margin-top: 25px;
+				padding: 25px;
+				background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+				border-radius: 15px;
+				border: 2px solid #e0e6ff;
+			}
+
+			.progress-bar {
+				width: 100%;
+				height: 35px;
+				background: rgba(255, 255, 255, 0.8);
+				border-radius: 17.5px;
+				overflow: hidden;
+				margin-bottom: 15px;
+				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+			}
+
+			.progress-fill {
+				height: 100%;
+				width: 0%;
+				background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+				transition: width 0.3s ease;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: white;
+				font-weight: 600;
+				font-size: 14px;
+				position: relative;
+				overflow: hidden;
+			}
+
+			.progress-fill::before {
+				content: "";
+				position: absolute;
+				top: 0;
+				left: -100%;
+				width: 100%;
+				height: 100%;
+				background: linear-gradient(
+					90deg,
+					transparent,
+					rgba(255, 255, 255, 0.3),
+					transparent
+				);
+				animation: shimmer 2s infinite;
+			}
+
+			@keyframes shimmer {
+				0% {
+					left: -100%;
+				}
+				100% {
+					left: 100%;
+				}
+			}
+
+			.status-text {
+				text-align: center;
+				color: #555;
+				font-size: 14px;
+				font-weight: 500;
+			}
+
+			.stats-grid {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 10px;
+				margin-top: 15px;
+			}
+
+			.stat-item {
+				background: white;
+				padding: 10px;
+				border-radius: 8px;
+				text-align: center;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+			}
+
+			.stat-label {
+				font-size: 11px;
+				color: #888;
+				margin-bottom: 5px;
+			}
+
+			.stat-value {
+				font-size: 14px;
+				font-weight: 600;
+				color: #667eea;
+			}
+
+			.proxy-status {
+				display: none;
+				margin-top: 15px;
+				padding: 20px;
+				background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+				border-left: 4px solid #4caf50;
+				border-radius: 10px;
+			}
+
+			.proxy-status.active {
+				display: block;
+			}
+
+			.proxy-header {
+				font-weight: 600;
+				margin-bottom: 15px;
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: #2e7d32;
+			}
+
+			.proxy-list {
+				max-height: 250px;
+				overflow-y: auto;
+				margin-top: 10px;
+			}
+
+			.proxy-list::-webkit-scrollbar {
+				width: 8px;
+			}
+
+			.proxy-list::-webkit-scrollbar-track {
+				background: rgba(255, 255, 255, 0.3);
+				border-radius: 4px;
+			}
+
+			.proxy-list::-webkit-scrollbar-thumb {
+				background: #4caf50;
+				border-radius: 4px;
+			}
+
+			.proxy-item {
+				padding: 12px;
+				margin: 5px 0;
+				background: white;
+				border-radius: 8px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				transition: all 0.3s;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+			}
+
+			.proxy-item:hover {
+				transform: translateX(5px);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+			}
+
+			.proxy-item.working {
+				border-left: 3px solid #4caf50;
+			}
+
+			.proxy-item.testing {
+				border-left: 3px solid #ff9800;
+			}
+
+			.proxy-item.failed {
+				border-left: 3px solid #f44336;
+				opacity: 0.6;
+			}
+
+			.proxy-address {
+				font-size: 12px;
+				font-family: monospace;
+				color: #555;
+			}
+
+			.proxy-latency {
+				font-size: 12px;
+				font-weight: 600;
+				padding: 4px 8px;
+				border-radius: 4px;
+				background: #e8f5e9;
+				color: #2e7d32;
+			}
+
+			.alert {
+				padding: 15px;
+				margin-bottom: 20px;
+				border-radius: 10px;
+				display: none;
+				animation: slideDown 0.3s ease-out;
+			}
+
+			@keyframes slideDown {
+				from {
+					opacity: 0;
+					transform: translateY(-10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			.alert.success {
+				background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+				color: #155724;
+				border: 1px solid #c3e6cb;
+				border-left: 4px solid #28a745;
+			}
+
+			.alert.error {
+				background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+				color: #721c24;
+				border: 1px solid #f5c6cb;
+				border-left: 4px solid #dc3545;
+			}
+
+			.alert.info {
+				background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+				color: #0c5460;
+				border: 1px solid #bee5eb;
+				border-left: 4px solid #17a2b8;
+			}
+
+			@keyframes spin {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			.spinner {
+				display: inline-block;
+				width: 16px;
+				height: 16px;
+				border: 3px solid rgba(102, 126, 234, 0.3);
+				border-top-color: #667eea;
+				border-radius: 50%;
+				animation: spin 0.8s linear infinite;
+			}
+
+			.feature-note {
+				background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+				border: 1px solid #ffeaa7;
+				color: #856404;
+				padding: 20px;
+				border-radius: 15px;
+				margin-top: 25px;
+				font-size: 13px;
+				line-height: 1.6;
+				border-left: 4px solid #ffc107;
+			}
+
+			.feature-note strong {
+				display: block;
+				margin-bottom: 8px;
+				font-size: 14px;
+				color: #664d03;
+			}
+
+			.footer {
+				text-align: center;
+				padding: 20px;
+				background: #f8f9fa;
+				color: #666;
+				font-size: 12px;
+				border-top: 1px solid #e0e0e0;
+			}
+
+			.api-status {
+				display: inline-block;
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				margin-right: 5px;
+			}
+
+			.api-status.online {
+				background: #4caf50;
+				box-shadow: 0 0 5px #4caf50;
+			}
+
+			.api-status.offline {
+				background: #f44336;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<div class="logo">ZEDLABS</div>
+				<div class="subtitle">
+					YouTube Downloader Pro v4.0 - Web Edition | Author: Yahya Zulfikri
+				</div>
+			</div>
+
+			<div class="content">
+				<div
+					id="alert"
+					class="alert"
+				></div>
+
+				<div class="form-group">
+					<label>🔗 YouTube URL</label>
+					<input
+						type="text"
+						id="youtubeUrl"
+						placeholder="Paste YouTube video or playlist URL here..."
+						value="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label>🎬 Download Mode</label>
+					<div class="mode-selector">
+						<div
+							class="mode-option active"
+							data-mode="video"
+							onclick="selectMode('video')"
+						>
+							<div class="mode-icon">🎥</div>
+							<div><strong>Video</strong></div>
+							<div style="font-size: 12px; opacity: 0.8; margin-top: 5px">
+								MP4 Format
+							</div>
+						</div>
+						<div
+							class="mode-option"
+							data-mode="audio"
+							onclick="selectMode('audio')"
+						>
+							<div class="mode-icon">🎵</div>
+							<div><strong>Audio</strong></div>
+							<div style="font-size: 12px; opacity: 0.8; margin-top: 5px">
+								MP3 Format
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>📁 Output Folder Name</label>
+					<input
+						type="text"
+						id="folderName"
+						placeholder="hasil"
+						value="hasil"
+					/>
+				</div>
+
+				<div class="checkbox-group">
+					<input
+						type="checkbox"
+						id="useProxy"
+						onchange="toggleProxy()"
+					/>
+					<label
+						for="useProxy"
+						style="margin: 0; cursor: pointer"
+						>🔒 Use Proxy (optional - for blocked regions)</label
+					>
+				</div>
+
+				<div
+					id="proxySection"
+					style="display: none"
+				>
+					<div class="form-group">
+						<label>📄 Upload Proxy CSV File</label>
+						<input
+							type="file"
+							id="proxyFile"
+							accept=".csv"
+							onchange="loadProxies()"
+						/>
+						<div style="font-size: 12px; color: #666; margin-top: 5px">
+							Format: ip_address column or first column with proxy addresses
+						</div>
+					</div>
+					<div
+						id="proxyStatus"
+						class="proxy-status"
+					>
+						<div class="proxy-header">
+							<span class="spinner"></span>
+							<span>Testing proxies...</span>
+						</div>
+						<div
+							id="proxyList"
+							class="proxy-list"
+						></div>
+					</div>
+				</div>
+
+				<button
+					class="btn"
+					onclick="startDownload()"
+					id="downloadBtn"
+				>
+					<span>⬇️ Start Download</span>
+				</button>
+
+				<div
+					id="progressContainer"
+					class="progress-container"
+				>
+					<div class="progress-bar">
+						<div
+							class="progress-fill"
+							id="progressFill"
+						>
+							0%
+						</div>
+					</div>
+					<div
+						class="status-text"
+						id="statusText"
+					>
+						Initializing...
+					</div>
+					<div
+						class="stats-grid"
+						id="statsGrid"
+						style="display: none"
+					>
+						<div class="stat-item">
+							<div class="stat-label">Speed</div>
+							<div
+								class="stat-value"
+								id="statSpeed"
+							>
+								-
+							</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-label">ETA</div>
+							<div
+								class="stat-value"
+								id="statEta"
+							>
+								-
+							</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-label">Downloaded</div>
+							<div
+								class="stat-value"
+								id="statDownloaded"
+							>
+								-
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="feature-note">
+					<strong>📌 Setup Instructions:</strong>
+					1. Install dependencies:
+					<code
+						>pip install flask flask-cors yt-dlp pandas requests colorama</code
+					><br />
+					2. Run backend API: <code>python app.py</code><br />
+					3. Open this HTML file in browser<br />
+					4. (Optional) Upload proxy CSV for downloading from blocked regions
+				</div>
+			</div>
+
+			<div class="footer">
+				<div style="margin-bottom: 10px">
+					<span
+						class="api-status"
+						id="apiStatus"
+					></span>
+					<span id="apiStatusText">Checking API connection...</span>
+				</div>
+				<div>© 2025 ZEDLABS - YouTube Downloader Pro v4.0</div>
+			</div>
+		</div>
+
+		<script>
+			const API_URL = "http://localhost:5500";
+			let selectedMode = "video";
+			let workingProxies = [];
+			let currentDownloadId = null;
+
+			// Check API status on load
+			window.addEventListener("load", checkAPIStatus);
+
+			async function checkAPIStatus() {
+				const statusDot = document.getElementById("apiStatus");
+				const statusText = document.getElementById("apiStatusText");
+
+				try {
+					const response = await fetch(`${API_URL}/api/health`);
+					const data = await response.json();
+
+					if (data.success) {
+						statusDot.className = "api-status online";
+						statusText.textContent = `API Online - v${data.version}`;
+					} else {
+						throw new Error("API not responding");
+					}
+				} catch (error) {
+					statusDot.className = "api-status offline";
+					statusText.textContent =
+						"API Offline - Please start backend server (python app.py)";
+				}
+			}
+
+			function selectMode(mode) {
+				selectedMode = mode;
+				document.querySelectorAll(".mode-option").forEach((opt) => {
+					opt.classList.remove("active");
+				});
+				document
+					.querySelector(`.mode-option[data-mode="${mode}"]`)
+					.classList.add("active");
+			}
+
+			function toggleProxy() {
+				const proxySection = document.getElementById("proxySection");
+				const useProxy = document.getElementById("useProxy").checked;
+				proxySection.style.display = useProxy ? "block" : "none";
+			}
+
+			function showAlert(message, type) {
+				const alert = document.getElementById("alert");
+				alert.className = `alert ${type}`;
+				alert.innerHTML = message;
+				alert.style.display = "block";
+
+				setTimeout(() => {
+					alert.style.display = "none";
+				}, 5000);
+			}
+
+			async function loadProxies() {
+				const fileInput = document.getElementById("proxyFile");
+				const file = fileInput.files[0];
+
+				if (!file) return;
+
+				const reader = new FileReader();
+				reader.onload = async function (e) {
+					const content = e.target.result;
+
+					showAlert("📡 Testing proxies... This may take a moment.", "info");
+
+					try {
+						const response = await fetch(`${API_URL}/api/test-proxies`, {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify({ csv_content: content }),
+						});
+
+						const data = await response.json();
+
+						if (data.success) {
+							displayProxyResults(data);
+							workingProxies = data.proxies.map((p) => p.proxy);
+							showAlert(
+								`✅ Success! Found ${data.working} working proxies out of ${data.total} tested.`,
+								"success",
+							);
+						} else {
+							showAlert(`❌ Error: ${data.message}`, "error");
+						}
+					} catch (error) {
+						showAlert(
+							`❌ Error connecting to API: ${error.message}. Make sure backend is running.`,
+							"error",
+						);
+					}
+				};
+				reader.readAsText(file);
+			}
+
+			function displayProxyResults(data) {
+				const proxyStatus = document.getElementById("proxyStatus");
+				const proxyList = document.getElementById("proxyList");
+				proxyStatus.classList.add("active");
+
+				const proxyHeader = proxyStatus.querySelector(".proxy-header");
+				proxyHeader.innerHTML = `
+                <span style="font-size: 20px;">✅</span>
+                <span>Found ${data.working} working proxies (sorted by speed)</span>
+            `;
+
+				proxyList.innerHTML = "";
+
+				data.proxies.forEach((proxy, index) => {
+					const proxyItem = document.createElement("div");
+					proxyItem.className = "proxy-item working";
+
+					const latencyColor =
+						proxy.latency < 500
+							? "#4caf50"
+							: proxy.latency < 1000
+								? "#ff9800"
+								: "#f44336";
+
+					proxyItem.innerHTML = `
+                    <span class="proxy-address">${index + 1}. ${proxy.proxy.substring(0, 45)}</span>
+                    <span class="proxy-latency" style="background: ${latencyColor}20; color: ${latencyColor}">
+                        ${Math.round(proxy.latency)}ms
+                    </span>
+                `;
+					proxyList.appendChild(proxyItem);
+				});
+			}
+
+			async function startDownload() {
+				const url = document.getElementById("youtubeUrl").value.trim();
+				const folder =
+					document.getElementById("folderName").value.trim() || "hasil";
+				const useProxy = document.getElementById("useProxy").checked;
+				const downloadBtn = document.getElementById("downloadBtn");
+
+				// Validation
+				if (!url) {
+					showAlert("❌ Please enter a YouTube URL", "error");
+					return;
+				}
+
+				if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
+					showAlert("❌ Please enter a valid YouTube URL", "error");
+					return;
+				}
+
+				if (useProxy && workingProxies.length === 0) {
+					showAlert(
+						'❌ No working proxies available. Please test proxies first or uncheck "Use Proxy"',
+						"error",
+					);
+					return;
+				}
+
+				// Start download
+				downloadBtn.disabled = true;
+				downloadBtn.innerHTML =
+					'<span><span class="spinner"></span> Starting...</span>';
+
+				try {
+					const response = await fetch(`${API_URL}/api/download`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							url: url,
+							mode: selectedMode,
+							folder: folder,
+							proxy: useProxy ? workingProxies[0] : null,
+						}),
+					});
+
+					const data = await response.json();
+
+					if (data.success) {
+						currentDownloadId = data.download_id;
+						showProgress();
+						trackProgress(data.download_id);
+						showAlert("✅ Download started successfully!", "success");
+					} else {
+						throw new Error(data.message);
+					}
+				} catch (error) {
+					showAlert(`❌ Error: ${error.message}`, "error");
+					downloadBtn.disabled = false;
+					downloadBtn.innerHTML = "<span>⬇️ Start Download</span>";
+				}
+			}
+
+			function showProgress() {
+				const progressContainer = document.getElementById("progressContainer");
+				const statsGrid = document.getElementById("statsGrid");
+				progressContainer.style.display = "block";
+				statsGrid.style.display = "grid";
+			}
+
+			async function trackProgress(downloadId) {
+				const progressFill = document.getElementById("progressFill");
+				const statusText = document.getElementById("statusText");
+				const statSpeed = document.getElementById("statSpeed");
+				const statEta = document.getElementById("statEta");
+				const statDownloaded = document.getElementById("statDownloaded");
+				const downloadBtn = document.getElementById("downloadBtn");
+
+				const interval = setInterval(async () => {
+					try {
+						const response = await fetch(
+							`${API_URL}/api/progress/${downloadId}`,
+						);
+						const data = await response.json();
+
+						if (data.success) {
+							const percent = Math.round(data.percent);
+							progressFill.style.width = percent + "%";
+							progressFill.textContent = percent + "%";
+
+							statusText.textContent =
+								data.status === "downloading"
+									? "📥 Downloading..."
+									: data.status === "completed"
+										? "✅ Download Complete!"
+										: data.status === "error"
+											? "❌ Error occurred"
+											: "🔄 Initializing...";
+
+							statSpeed.textContent = data.speed || "-";
+							statEta.textContent = data.eta || "-";
+							statDownloaded.textContent =
+								data.downloaded && data.total
+									? `${data.downloaded}/${data.total}`
+									: "-";
+
+							if (data.status === "completed") {
+								clearInterval(interval);
+								showAlert(
+									`✅ Download completed successfully! Saved to folder: ${document.getElementById("folderName").value || "hasil"}`,
+									"success",
+								);
+								downloadBtn.disabled = false;
+								downloadBtn.innerHTML = "<span>⬇️ Start Download</span>";
+
+								setTimeout(() => {
+									document.getElementById("progressContainer").style.display =
+										"none";
+									progressFill.style.width = "0%";
+								}, 5000);
+							} else if (data.status === "error") {
+								clearInterval(interval);
+								showAlert(`❌ Error: ${data.error}`, "error");
+								downloadBtn.disabled = false;
+								downloadBtn.innerHTML = "<span>⬇️ Start Download</span>";
+							}
+						}
+					} catch (error) {
+						clearInterval(interval);
+						showAlert("❌ Lost connection to API", "error");
+						downloadBtn.disabled = false;
+						downloadBtn.innerHTML = "<span>⬇️ Start Download</span>";
+					}
+				}, 1000);
+			}
+		</script>
+	</body>
+</html>
