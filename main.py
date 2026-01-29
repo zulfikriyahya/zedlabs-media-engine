@@ -1,394 +1,473 @@
-import yt_dlp
-import os
-import time
 import sys
+import os
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                             QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                             QTextEdit, QRadioButton, QButtonGroup, QFileDialog,
+                             QProgressBar, QGroupBox, QCheckBox, QTableWidget,
+                             QTableWidgetItem, QHeaderView, QFrame, QGridLayout)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtGui import QColor, QTextCursor
+import yt_dlp
+import pandas as pd
 import requests
 import concurrent.futures
-import pandas as pd
-from colorama import Fore, Style, init
-init(autoreset=True)
+import time
 
+# --- KONFIGURASI CONSTANT ---
 CHECK_URL = "https://www.google.com"
 TIMEOUT = 8
 MAX_THREADS = 10
 
-class AnimatedUI:
-    @staticmethod
-    def clear_screen():
-        os.system('cls' if os.name == 'nt' else 'clear')
+# --- WORKER THREADS (LOGIKA SAMA) ---
+class ProxyTestThread(QThread):
+    progress = pyqtSignal(int, int)
+    result = pyqtSignal(list)
+    log = pyqtSignal(str)
     
-    @staticmethod
-    def typewriter(text, color=Fore.WHITE, delay=0.02):
-        for char in text:
-            sys.stdout.write(color + char)
-            sys.stdout.flush()
-            time.sleep(delay)
-        print()
-    
-    @staticmethod
-    def garis(length=60, color=Fore.CYAN):
-        print(color + "═" * length + Style.RESET_ALL)
-    
-    @staticmethod
-    def garis_double():
-        print(Fore.CYAN + "╔" + "═" * 58 + "╗")
-    
-    @staticmethod
-    def garis_double_bottom():
-        print(Fore.CYAN + "╚" + "═" * 58 + "╝")
-    
-    @staticmethod
-    def box_text(text, color=Fore.CYAN):
-        print(Fore.CYAN + "║ " + color + text.ljust(56) + Fore.CYAN + " ║")
-    
-    @staticmethod
-    def loading_animation(text, duration=1):
-        frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-        end_time = time.time() + duration
-        i = 0
-        while time.time() < end_time:
-            sys.stdout.write(f"\r{Fore.YELLOW}{frames[i % len(frames)]} {Fore.WHITE}{text}")
-            sys.stdout.flush()
-            time.sleep(0.08)
-            i += 1
-        sys.stdout.write("\r" + " " * (len(text) + 3) + "\r")
-        sys.stdout.flush()
-    
-    @staticmethod
-    def banner():
-        AnimatedUI.clear_screen()
-        banner_art = f"""
-{Fore.CYAN}╔══════════════════════════════════════════════════════════╗
-{Fore.CYAN}║                                                          ║
-{Fore.CYAN}║ {Fore.YELLOW}███████╗███████╗██████╗ ██╗      █████╗ ██████╗ ███████╗ {Fore.CYAN}║
-{Fore.CYAN}║ {Fore.YELLOW}╚══███╔╝██╔════╝██╔══██╗██║     ██╔══██╗██╔══██╗██╔════╝ {Fore.CYAN}║
-{Fore.CYAN}║ {Fore.YELLOW}  ███╔╝ █████╗  ██║  ██║██║     ███████║██████╔╝███████╗ {Fore.CYAN}║
-{Fore.CYAN}║ {Fore.YELLOW} ███╔╝  ██╔══╝  ██║  ██║██║     ██╔══██║██╔══██╗╚════██║ {Fore.CYAN}║
-{Fore.CYAN}║ {Fore.YELLOW}███████╗███████╗██████╔╝███████╗██║  ██║██████╔╝███████║ {Fore.CYAN}║
-{Fore.CYAN}║ {Fore.YELLOW}╚══════╝╚══════╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝ {Fore.CYAN}║
-{Fore.CYAN}║                                                          ║
-{Fore.CYAN}╠══════════════════════════════════════════════════════════╣
-{Fore.CYAN}║   {Fore.GREEN}YouTube Downloader Pro v4.0 {Fore.CYAN}| {Fore.WHITE}Author: Yahya Zulfikri{Fore.CYAN}   ║
-{Fore.CYAN}╚══════════════════════════════════════════════════════════╝
-        """
-        print(banner_art)
-        time.sleep(0.3)
-
-def load_proxies(csv_file='proxy.csv'):
-    """Load proxies dari CSV dengan pandas untuk performa lebih baik"""
-    try:
-        df = pd.read_csv(csv_file)
+    def __init__(self, proxies):
+        super().__init__()
+        self.proxies = proxies
         
-        if 'ip_address' in df.columns:
-            proxies = df['ip_address'].dropna().astype(str).str.strip().tolist()
-        else:
-            proxies = df.iloc[:, 0].dropna().astype(str).str.strip().tolist()
-        
-        proxies = [f"http://{p}" if not p.startswith(('http://', 'https://', 'socks5://')) else p 
-                   for p in proxies if p and not p.startswith('#')]
-        
-        proxies = list(set(proxies))
-        
-        if proxies:
-            print(f"{Fore.GREEN}✓ {Fore.WHITE}Loaded {Fore.YELLOW}{len(proxies)}{Fore.WHITE} unique proxies")
-        else:
-            print(f"{Fore.YELLOW}⚠ {Fore.WHITE}No valid proxies found")
-        
-        return proxies
-        
-    except FileNotFoundError:
-        print(f"{Fore.RED}✗ {Fore.WHITE}File {csv_file} not found")
-        return []
-    except Exception as e:
-        print(f"{Fore.RED}✗ {Fore.WHITE}Error: {str(e)[:50]}")
-        return []
-
-def check_proxy(proxy):
-    """Check single proxy dengan response time"""
-    proxies_dict = {
-        "http": proxy,
-        "https": proxy,
-    }
-    try:
-        start = time.time()
-        response = requests.get(
-            CHECK_URL, 
-            proxies=proxies_dict, 
-            timeout=TIMEOUT,
-            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        )
-        if response.status_code == 200:
-            latency = (time.time() - start) * 1000
-            return {'proxy': proxy, 'latency': latency, 'status': 'OK'}
-    except:
-        pass
-    return {'proxy': proxy, 'latency': 9999, 'status': 'FAIL'}
-
-def test_all_proxies(proxies, max_workers=MAX_THREADS):
-    """Test proxies dengan concurrent futures untuk speed maksimal"""
-    
-    print(f"\n{Fore.CYAN}╔{'═' * 58}╗")
-    print(f"{Fore.CYAN}║ {Fore.YELLOW}Testing {len(proxies)} proxies ({max_workers} threads){' ' * (58 - 28 - len(str(len(proxies))) - len(str(max_workers)))}{Fore.CYAN}║")
-    print(f"{Fore.CYAN}╠{'═' * 58}╣")
-    
-    AnimatedUI.loading_animation("Initializing ZEDLABS scanner...", 2.0)
-    
-    valid_proxies = []
-    checked = 0
-    total = len(proxies)
-    start_time = time.time()
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(check_proxy, proxy): proxy for proxy in proxies}
-        
-        for future in concurrent.futures.as_completed(futures):
-            result = future.result()
-            checked += 1
-            
-            if checked % 10 == 0 or checked == total:
-                progress = int((checked / total) * 40)
-                bar = "█" * progress + "░" * (40 - progress)
-                percent = (checked / total) * 100
-                sys.stdout.write(f"\r{Fore.CYAN}║{Fore.CYAN}[{Fore.YELLOW}{bar}{Fore.CYAN}] {Fore.WHITE}{percent:5.1f}% {Fore.CYAN}│ {Fore.WHITE}{checked}/{total} {Fore.CYAN}║")
-                sys.stdout.flush()
-            
-            if result['status'] == 'OK':
-                valid_proxies.append(result)
-    
-    print(f"\n{Fore.CYAN}╚{'═' * 58}╝")
-    
-    elapsed_time = time.time() - start_time
-    
-    AnimatedUI.loading_animation("Sorting by latency...", 0.5)
-    
-    if valid_proxies:
-        valid_proxies.sort(key=lambda x: x['latency'])
-        
-        print(f"\n{Fore.GREEN}✓ {Fore.WHITE}Scan completed in {Fore.YELLOW}{elapsed_time:.2f}s")
-        print(f"{Fore.GREEN}✓ {Fore.WHITE}Active proxies: {Fore.GREEN}{len(valid_proxies)}{Fore.WHITE}/{Fore.YELLOW}{total}")
-        
-        print(f"\n{Fore.CYAN}╔{'═' * 58}╗")
-        print(f"{Fore.CYAN}║ {Fore.YELLOW}Top 10 Fastest Proxies{' ' * 35}{Fore.CYAN}║")
-        print(f"{Fore.CYAN}╠{'═' * 58}╣")
-        
-        for i, p in enumerate(valid_proxies[:10], 1):
-            proxy_short = p['proxy'].split('://')[-1][:28]
-            latency_str = f"{p['latency']:.0f}ms"
-            
-            if p['latency'] < 500:
-                speed_icon = f"{Fore.GREEN}⚡"
-            elif p['latency'] < 1000:
-                speed_icon = f"{Fore.YELLOW}●"
-            else:
-                speed_icon = f"{Fore.RED}◐"
-            
-            print(f"{Fore.CYAN}║ {Fore.YELLOW}{i:2d}. {speed_icon} {Fore.CYAN}{proxy_short:<28}            {Fore.YELLOW}{latency_str:>10} {Fore.CYAN}║")
-        
-        if len(valid_proxies) > 10:
-            print(f"{Fore.CYAN}║ {Fore.WHITE}... +{len(valid_proxies) - 10} more proxies{' ' * (58 - 19 - len(str(len(valid_proxies) - 10)))}{Fore.CYAN}║")
-        
-        print(f"{Fore.CYAN}╚{'═' * 58}╝")
-        
-        return [p['proxy'] for p in valid_proxies]
-    else:
-        print(f"\n{Fore.RED}✗ No working proxies found")
-        return []
-
-def progress_hook(d):
-    """Enhanced progress bar dengan warna dinamis"""
-    if d['status'] == 'downloading':
+    def check_proxy(self, proxy):
+        proxies_dict = {"http": proxy, "https": proxy}
         try:
-            percent_str = d.get('_percent_str', '0%').strip()
-            percent = float(percent_str.replace('%', ''))
-            speed = d.get('_speed_str', 'N/A').strip()
-            eta = d.get('_eta_str', 'N/A').strip()
-            downloaded = d.get('_downloaded_bytes_str', 'N/A').strip()
-            total = d.get('_total_bytes_str', 'N/A').strip()
-            
-            bar_length = 40
-            filled = int(bar_length * percent / 100)
-            bar = '█' * filled + '░' * (bar_length - filled)
-            
-            if percent < 25:
-                color = Fore.RED
-            elif percent < 50:
-                color = Fore.YELLOW
-            elif percent < 75:
-                color = Fore.CYAN
-            else:
-                color = Fore.GREEN
-            
-            print(f"\r{Fore.CYAN}[{color}{bar}{Fore.CYAN}] {Fore.YELLOW}{percent:5.1f}% {Fore.CYAN}│ {Fore.WHITE}{speed:<10} {Fore.CYAN}│ {Fore.MAGENTA}ETA {eta:<8} {Fore.CYAN}│ {Fore.WHITE}{downloaded}/{total}", 
-                  end='', flush=True)
+            start = time.time()
+            response = requests.get(CHECK_URL, proxies=proxies_dict, timeout=TIMEOUT,
+                                  headers={'User-Agent': 'Mozilla/5.0'})
+            if response.status_code == 200:
+                latency = (time.time() - start) * 1000
+                return {'proxy': proxy, 'latency': latency, 'status': 'OK'}
         except:
             pass
-    elif d['status'] == 'finished':
-        print(f"\r{Fore.CYAN}[{Fore.GREEN}{'█' * 40}{Fore.CYAN}] {Fore.GREEN}100.0% {Fore.CYAN}│ {Fore.GREEN}Complete!{' ' * 40}")
+        return {'proxy': proxy, 'latency': 9999, 'status': 'FAIL'}
+    
+    def run(self):
+        self.log.emit(f"[NET_SCAN] Probing {len(self.proxies)} nodes...")
+        valid_proxies = []
+        checked = 0
+        total = len(self.proxies)
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+            futures = {executor.submit(self.check_proxy, proxy): proxy for proxy in self.proxies}
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                checked += 1
+                self.progress.emit(checked, total)
+                if result['status'] == 'OK':
+                    valid_proxies.append(result)
+        
+        valid_proxies.sort(key=lambda x: x['latency'])
+        self.log.emit(f"[NET_OK] {len(valid_proxies)}/{total} nodes online")
+        self.result.emit(valid_proxies)
 
-def get_ydl_opts(folder, current_proxy, only_audio):
-    """Optimized yt-dlp options untuk performa maksimal"""
-    opts = {
-        'outtmpl': os.path.join(folder, '%(title)s.%(ext)s'),
-        'progress_hooks': [progress_hook],
-        'quiet': True,
-        'no_warnings': True,
-        'retries': 10,
-        'fragment_retries': 10,
-        'socket_timeout': 30,
-        'http_chunk_size': 10485760,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'concurrent_fragment_downloads': 5,
-        'noplaylist': True,
-    }
+class DownloadThread(QThread):
+    progress = pyqtSignal(str)
+    finished = pyqtSignal(bool, str)
     
-    if current_proxy:
-        opts['proxy'] = current_proxy
+    def __init__(self, url, folder, only_audio, proxies=None, is_playlist=False):
+        super().__init__()
+        self.url = url
+        self.folder = folder
+        self.only_audio = only_audio
+        self.proxies = proxies if proxies else []
+        self.is_playlist = is_playlist
+        
+    def progress_hook(self, d):
+        if d['status'] == 'downloading':
+            try:
+                p = d.get('_percent_str', '0%').strip()
+                s = d.get('_speed_str', 'N/A').strip()
+                e = d.get('_eta_str', 'N/A').strip()
+                self.progress.emit(f">> DL: {p} | SPD: {s} | ETA: {e}")
+            except: pass
+        elif d['status'] == 'finished':
+            self.progress.emit(">> PROCESSING FILE...")
     
-    if only_audio:
-        opts.update({
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '320',
-            }],
-        })
-    else:
-        opts.update({
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            'merge_output_format': 'mp4',
-        })
-    
-    return opts
-
-def download_video(url, folder='hasil', only_audio=False, proxies=None):
-    """Smart download dengan auto-fallback proxy"""
-    os.makedirs(folder, exist_ok=True)
-    
-    proxy_index = 0
-    max_attempts = min(len(proxies), 5) if proxies else 3
-    
-    for attempt in range(max_attempts):
+    def download_with_proxy(self, proxy_index=0):
         try:
-            current_proxy = None
-            if proxies and len(proxies) > proxy_index:
-                current_proxy = proxies[proxy_index]
-                proxy_short = current_proxy.split('://')[-1][:35]
-                print(f"\n{Fore.CYAN}╔{'═' * 58}╗")
-                print(f"{Fore.CYAN}║ {Fore.GREEN}Using proxy #{proxy_index + 1}: {Fore.YELLOW}{proxy_short:<32}{Fore.CYAN}║")
-                print(f"{Fore.CYAN}╚{'═' * 58}╝")
+            os.makedirs(self.folder, exist_ok=True)
+            current_proxy = self.proxies[proxy_index]['proxy'] if self.proxies and proxy_index < len(self.proxies) else None
             
-            ydl_opts = get_ydl_opts(folder, current_proxy, only_audio)
+            if current_proxy: self.progress.emit(f">> PROXY: {current_proxy}")
             
-            AnimatedUI.loading_animation("Establishing connection...", 0.8)
-            print(f"{Fore.YELLOW}▶ {Fore.WHITE}Downloading: {Fore.CYAN}{url[:55]}...")
-            print()
+            opts = {
+                'outtmpl': os.path.join(self.folder, '%(title)s.%(ext)s'),
+                'progress_hooks': [self.progress_hook],
+                'quiet': True, 'no_warnings': True, 'retries': 5,
+                'noplaylist': not self.is_playlist,
+            }
+            if current_proxy: opts['proxy'] = current_proxy
             
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-            
-            print(f"\n{Fore.GREEN}✓ {Fore.WHITE}Download successful!\n")
-            return True
-            
-        except Exception as e:
-            error_msg = str(e)
-            print(f"\n{Fore.RED}✗ {Fore.WHITE}Error: {error_msg[:55]}...")
-            
-            if proxies and proxy_index < len(proxies) - 1:
-                proxy_index += 1
-                print(f"{Fore.YELLOW}⟳ {Fore.WHITE}Switching to backup proxy #{proxy_index + 1}...")
-                AnimatedUI.loading_animation("Reconnecting...", 0.8)
+            if self.only_audio:
+                opts.update({'format': 'bestaudio/best', 'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3'}]})
             else:
-                print(f"\n{Fore.RED}✗ {Fore.WHITE}All proxies failed or download error")
-                return False
-    
-    return False
-
-def download_playlist(playlist_url, folder='hasil', only_audio=False, proxies=None):
-    """Smart playlist download dengan error handling"""
-    try:
-        os.makedirs(folder, exist_ok=True)
-        
-        current_proxy = proxies[0] if proxies else None
-        if current_proxy:
-            proxy_short = current_proxy.split('://')[-1][:35]
-            print(f"\n{Fore.GREEN}✓ {Fore.WHITE}Using fastest proxy: {Fore.YELLOW}{proxy_short}")
-        
-        ydl_opts = get_ydl_opts(folder, current_proxy, only_audio)
-        ydl_opts['outtmpl'] = os.path.join(folder, '%(playlist_title)s/%(title)s.%(ext)s')
-        ydl_opts['ignoreerrors'] = True
-        ydl_opts['noplaylist'] = False
-        
-        AnimatedUI.loading_animation("Fetching playlist metadata...", 1)
-        print(f"{Fore.MAGENTA}▶ {Fore.WHITE}Playlist: {Fore.CYAN}{playlist_url[:55]}...\n")
-        
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([playlist_url])
-        
-        print(f"\n{Fore.GREEN}✓ {Fore.WHITE}Playlist download complete!\n")
-        return True
-        
-    except Exception as e:
-        print(f"\n{Fore.RED}✗ {Fore.WHITE}Error: {str(e)[:50]}")
-        
-        if proxies and len(proxies) > 1:
-            print(f"{Fore.YELLOW}⟳ {Fore.WHITE}Retrying with backup proxy...")
-            return download_playlist(playlist_url, folder, only_audio, proxies[1:])
-        return False
-
-def animated_input(prompt, color=Fore.CYAN):
-    """Input dengan typewriter effect"""
-    AnimatedUI.typewriter(prompt, color, delay=0.015)
-    return input(f"{Fore.YELLOW}➜ {Fore.WHITE}")
-
-if __name__ == "__main__":
-    AnimatedUI.banner()
-    
-    AnimatedUI.garis_double()
-    AnimatedUI.box_text("Configuration", Fore.YELLOW)
-    AnimatedUI.garis_double_bottom()
-    
-    print()
-    use_proxy = animated_input("Use proxy? [y/n]").lower()
-    working_proxies = []
-    
-    if use_proxy == 'y':
-        proxy_file = animated_input("Proxy CSV file (default: proxy.csv)") or "proxy.csv"
-        
-        AnimatedUI.loading_animation("Loading proxies...", 0.8)
-        all_proxies = load_proxies(proxy_file)
-        
-        if all_proxies:
-            time.sleep(0.3)
-            working_proxies = test_all_proxies(all_proxies, max_workers=MAX_THREADS)
+                opts.update({'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', 'merge_output_format': 'mp4'})
             
-            if not working_proxies:
-                print(f"\n{Fore.RED}✗ {Fore.WHITE}No working proxies, continuing without proxy\n")
+            if self.is_playlist:
+                opts['outtmpl'] = os.path.join(self.folder, '%(playlist_title)s/%(title)s.%(ext)s')
+                opts['ignoreerrors'] = True
+            
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                ydl.download([self.url])
+            return True
+        except Exception as e:
+            self.progress.emit(f"[ERR] {str(e)[:60]}")
+            return False
+    
+    def run(self):
+        attempts = 3 if not self.proxies else min(len(self.proxies), 5)
+        for i in range(attempts):
+            if self.download_with_proxy(i):
+                self.finished.emit(True, "[COMPLETE] OPERATION SUCCESSFUL")
+                return
+            if i < attempts - 1:
+                self.progress.emit(f"[RETRY] Switching node {i+2}/{attempts}...")
                 time.sleep(1)
+        self.finished.emit(False, "[FAILED] OPERATION ABORTED")
+
+# --- MAIN UI ---
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("ZEDLABS.ID :: MEDIA DOWNLOADER ENGINE")
+        self.setFixedSize(640, 720) # Lebar 640px, Tinggi 720px (Fixed)
+        
+        self.proxies = []
+        self.valid_proxies = []
+        
+        self.init_ui()
+        self.apply_theme()
+        
+    def apply_theme(self):
+        # TEMA: Cyberpunk Terminal / Military Dashboard
+        self.setStyleSheet("""
+            QMainWindow, QWidget { background-color: #050505; color: #00FF00; font-family: 'Consolas', monospace; font-size: 9pt; }
+            
+            /* GROUPS */
+            QGroupBox {
+                border: 1px solid #333;
+                background-color: #080808;
+                margin-top: 20px;
+                font-weight: bold;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+                background-color: #00FF00;
+                color: #000;
+                font-weight: 900;
+                text-transform: uppercase;
+            }
+
+            /* INPUTS */
+            QLineEdit {
+                background-color: #0F0F0F;
+                border: 1px solid #333;
+                color: #FFF;
+                padding: 6px;
+                font-family: 'Consolas';
+            }
+            QLineEdit:focus { border: 1px solid #00FF00; background-color: #111; }
+
+            /* BUTTONS */
+            QPushButton {
+                background-color: #000;
+                color: #00FF00;
+                border: 1px solid #00FF00;
+                padding: 8px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            QPushButton:hover { background-color: #00FF00; color: #000; }
+            QPushButton:pressed { background-color: #008800; }
+            QPushButton:disabled { border-color: #444; color: #444; }
+
+            /* TABLE */
+            QTableWidget {
+                background-color: #080808;
+                border: 1px solid #333;
+                gridline-color: #222;
+                color: #DDD;
+                font-size: 8pt;
+            }
+            QHeaderView::section {
+                background-color: #111;
+                color: #00FF00;
+                border: none;
+                padding: 4px;
+                font-weight: bold;
+            }
+            QTableWidget::item:selected { background-color: #003300; color: #FFF; }
+
+            /* LOGS */
+            QTextEdit {
+                background-color: #000;
+                border: 1px solid #333;
+                color: #00FF00;
+                font-size: 8pt;
+                padding: 5px;
+            }
+
+            /* PROGRESS */
+            QProgressBar {
+                border: 1px solid #333;
+                background-color: #000;
+                text-align: center;
+                height: 15px;
+                color: #FFF;
+            }
+            QProgressBar::chunk { background-color: #00FF00; }
+            
+            /* CONTROLS */
+            QCheckBox, QRadioButton { spacing: 8px; font-weight: bold; }
+            QCheckBox::indicator, QRadioButton::indicator {
+                width: 14px; height: 14px;
+                border: 1px solid #00FF00;
+                background: #000;
+            }
+            QCheckBox::indicator:checked, QRadioButton::indicator:checked { background: #00FF00; }
+        """)
     
-    print()
-    AnimatedUI.garis_double()
-    AnimatedUI.box_text("Download Configuration", Fore.YELLOW)
-    AnimatedUI.garis_double_bottom()
-    print()
-    
-    url = animated_input("YouTube URL")
-    mode = animated_input("Mode: (v)ideo or (a)udio? [v/a]").lower()
-    folder = animated_input("Output folder (default: hasil)") or "hasil"
-    
-    only_audio = mode == 'a'
-    
-    print()
-    AnimatedUI.garis(60, Fore.MAGENTA)
-    AnimatedUI.loading_animation("Initializing ZEDLABS engine...", 1)
-    
-    if "playlist" in url.lower() or "list=" in url:
-        download_playlist(url, folder=folder, only_audio=only_audio, proxies=working_proxies)
-    else:
-        download_video(url, folder=folder, only_audio=only_audio, proxies=working_proxies)
-    
-    print()
-    AnimatedUI.garis_double()
-    AnimatedUI.box_text("Process Complete - ZEDLABS", Fore.GREEN)
-    AnimatedUI.garis_double_bottom()
-    print()
+    def init_ui(self):
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        # Layout Utama: Vertikal (Header -> Body -> Footer)
+        root_layout = QVBoxLayout(main_widget)
+        root_layout.setSpacing(15)
+        root_layout.setContentsMargins(20, 20, 20, 20)
+
+        # 1. HEADER (ASCII ART)
+        ascii_banner = """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║   ███████╗███████╗██████╗ ██╗      █████╗ ██████╗ ███████╗     ██╗██████╗    ║
+║   ╚══███╔╝██╔════╝██╔══██╗██║     ██╔══██╗██╔══██╗██╔════╝     ██║██╔══██╗   ║
+║     ███╔╝ █████╗  ██║  ██║██║     ███████║██████╔╝███████╗     ██║██║  ██║   ║
+║    ███╔╝  ██╔══╝  ██║  ██║██║     ██╔══██║██╔══██╗╚════██║     ██║██║  ██║   ║
+║   ███████╗███████╗██████╔╝███████╗██║  ██║██████╔╝███████║ ██╗ ██║██████╔╝   ║
+║   ╚══════╝╚══════╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═════╝ ╚══════╝ ╚═╝ ╚═╝╚═════╝    ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║   >> SYSTEM : MEDIA DOWNLOADER ENGINE | VER : 1.0.0 | DEV : YAHYA ZULFIKRI   ║
+║                                                                              ║
+║                   UNIVERSAL VIDEO & AUDIO EXTRACTION ENGINE                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+        lbl_header = QLabel(ascii_banner)
+        lbl_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_header.setStyleSheet("font-family: 'Consolas', monospace; font-size: 7pt; color: #00FF00; margin-bottom: 5px;")
+        root_layout.addWidget(lbl_header)
+
+        # 2. BODY (SPLIT LAYOUT: KIRI vs KANAN)
+        body_layout = QHBoxLayout()
+        body_layout.setSpacing(20)
+
+        # --- KOLOM KIRI (COMMAND CENTER) ---
+        left_col = QVBoxLayout()
+        
+        # Section: Target & Output
+        grp_target = QGroupBox("TARGET CONFIGURATION")
+        l_target = QVBoxLayout()
+        l_target.setSpacing(10)
+        
+        self.url_edit = QLineEdit()
+        self.url_edit.setPlaceholderText("Paste URL Here...")
+        self.url_edit.textChanged.connect(self.detect_playlist)
+        l_target.addWidget(QLabel(">> TARGET URL:"))
+        l_target.addWidget(self.url_edit)
+        
+        h_folder = QHBoxLayout()
+        self.folder_edit = QLineEdit("downloads")
+        btn_browse = QPushButton("...")
+        btn_browse.setFixedWidth(40)
+        btn_browse.clicked.connect(self.browse_folder)
+        h_folder.addWidget(self.folder_edit)
+        h_folder.addWidget(btn_browse)
+        l_target.addWidget(QLabel(">> OUTPUT DIRECTORY:"))
+        l_target.addLayout(h_folder)
+        grp_target.setLayout(l_target)
+        left_col.addWidget(grp_target)
+
+        # Section: Mode
+        grp_mode = QGroupBox("OPERATION MODE")
+        l_mode = QVBoxLayout()
+        h_radios = QHBoxLayout()
+        self.mode_group = QButtonGroup()
+        self.r_vid = QRadioButton("VIDEO (MP4)")
+        self.r_aud = QRadioButton("AUDIO (MP3)")
+        self.r_vid.setChecked(True)
+        self.mode_group.addButton(self.r_vid)
+        self.mode_group.addButton(self.r_aud)
+        h_radios.addWidget(self.r_vid)
+        h_radios.addWidget(self.r_aud)
+        l_mode.addLayout(h_radios)
+        
+        self.chk_playlist = QCheckBox("FORCE BATCH / PLAYLIST MODE")
+        self.chk_playlist.setStyleSheet("color: #FFFF00;")
+        l_mode.addWidget(self.chk_playlist)
+        grp_mode.setLayout(l_mode)
+        left_col.addWidget(grp_mode)
+
+        # Section: Proxy Config
+        grp_proxy = QGroupBox("NETWORK ROUTING")
+        l_proxy = QVBoxLayout()
+        h_pfile = QHBoxLayout()
+        self.proxy_edit = QLineEdit("proxy.csv")
+        btn_p_browse = QPushButton("...")
+        btn_p_browse.setFixedWidth(40)
+        btn_p_browse.clicked.connect(self.browse_proxy_file)
+        h_pfile.addWidget(self.proxy_edit)
+        h_pfile.addWidget(btn_p_browse)
+        l_proxy.addWidget(QLabel(">> PROXY LIST (CSV):"))
+        l_proxy.addLayout(h_pfile)
+        
+        self.btn_scan = QPushButton("SCAN NODES")
+        self.btn_scan.clicked.connect(self.load_proxies)
+        l_proxy.addWidget(self.btn_scan)
+        
+        self.chk_use_proxy = QCheckBox("ENABLE AUTO-ROTATION")
+        l_proxy.addWidget(self.chk_use_proxy)
+        
+        grp_proxy.setLayout(l_proxy)
+        left_col.addWidget(grp_proxy)
+        left_col.addStretch() # Push everything up
+
+        # --- KOLOM KANAN (MONITORING) ---
+        right_col = QVBoxLayout()
+        
+        # Section: Proxy Monitor
+        grp_monitor = QGroupBox("NODE STATUS MONITOR")
+        l_monitor = QVBoxLayout()
+        self.proxy_bar = QProgressBar()
+        self.proxy_bar.setVisible(False)
+        l_monitor.addWidget(self.proxy_bar)
+        
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["ID", "NODE ADDRESS", "LATENCY"])
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.verticalHeader().setVisible(False)
+        l_monitor.addWidget(self.table)
+        grp_monitor.setLayout(l_monitor)
+        right_col.addWidget(grp_monitor)
+
+        # Section: System Log
+        grp_log = QGroupBox("SYSTEM KERNEL LOG")
+        l_log = QVBoxLayout()
+        self.log_text = QTextEdit()
+        self.log_text.setReadOnly(True)
+        l_log.addWidget(self.log_text)
+        grp_log.setLayout(l_log)
+        right_col.addWidget(grp_log)
+
+        # Add columns to body
+        body_layout.addLayout(left_col, 4) # Ratio 4
+        body_layout.addLayout(right_col, 6) # Ratio 6
+        root_layout.addLayout(body_layout)
+
+        # 3. FOOTER (ACTION BAR)
+        footer_layout = QVBoxLayout()
+        self.btn_run = QPushButton(">> INITIALIZE DOWNLOAD SEQUENCE <<")
+        self.btn_run.setFixedHeight(50)
+        self.btn_run.setStyleSheet("""
+            QPushButton { font-size: 14pt; background-color: #001100; border: 2px solid #00FF00; letter-spacing: 3px; }
+            QPushButton:hover { background-color: #00FF00; color: #000; }
+        """)
+        self.btn_run.clicked.connect(self.start_download)
+        footer_layout.addWidget(self.btn_run)
+        
+        lbl_info = QLabel("ZEDLABS.ID SECURITY SYSTEMS | ALL RIGHTS RESERVED")
+        lbl_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_info.setStyleSheet("color: #444; font-size: 7pt; margin-top: 5px;")
+        footer_layout.addWidget(lbl_info)
+        
+        root_layout.addLayout(footer_layout)
+
+        # Init Log
+        self.log("SYSTEM INITIALIZED...")
+        self.log("READY FOR INPUT.")
+
+    # --- LOGIC HANDLERS (Sama seperti sebelumnya) ---
+    def detect_playlist(self):
+        if any(x in self.url_edit.text().lower() for x in ["playlist", "list="]):
+            if not self.chk_playlist.isChecked():
+                self.chk_playlist.setChecked(True)
+                self.log("[SYS] Playlist detected. Mode updated.")
+
+    def browse_folder(self):
+        d = QFileDialog.getExistingDirectory(self, "Output Dir")
+        if d: self.folder_edit.setText(d)
+
+    def browse_proxy_file(self):
+        f, _ = QFileDialog.getOpenFileName(self, "Proxy CSV", "", "*.csv")
+        if f: self.proxy_edit.setText(f)
+
+    def log(self, msg):
+        t = time.strftime("%H:%M:%S")
+        self.log_text.append(f"[{t}] {msg}")
+        self.log_text.moveCursor(QTextCursor.MoveOperation.End)
+
+    def load_proxies(self):
+        try:
+            path = self.proxy_edit.text()
+            self.log(f"[SYS] Loading {path}...")
+            df = pd.read_csv(path)
+            raw = df.iloc[:,0].dropna().astype(str).str.strip().tolist() if 'ip_address' not in df else df['ip_address'].dropna().astype(str).tolist()
+            proxies = [f"http://{p}" if not p.startswith(('http','socks')) else p for p in raw]
+            
+            self.proxy_bar.setVisible(True)
+            self.proxy_bar.setMaximum(len(proxies))
+            self.btn_scan.setEnabled(False)
+            
+            self.pt = ProxyTestThread(list(set(proxies)))
+            self.pt.progress.connect(lambda c, t: self.proxy_bar.setValue(c))
+            self.pt.result.connect(self.on_scan_done)
+            self.pt.log.connect(self.log)
+            self.pt.start()
+        except Exception as e:
+            self.log(f"[ERR] {e}")
+
+    def on_scan_done(self, valid):
+        self.valid_proxies = valid
+        self.proxy_bar.setVisible(False)
+        self.btn_scan.setEnabled(True)
+        
+        self.table.setRowCount(0)
+        for row, p in enumerate(valid):
+            self.table.insertRow(row)
+            self.table.setItem(row, 0, QTableWidgetItem(f"{row+1:02d}"))
+            self.table.setItem(row, 1, QTableWidgetItem(p['proxy']))
+            lat = QTableWidgetItem(f"{p['latency']:.0f} ms")
+            lat.setForeground(QColor("#00FF00" if p['latency']<500 else "#FFFF00"))
+            self.table.setItem(row, 2, lat)
+            
+        if valid: 
+            self.chk_use_proxy.setChecked(True)
+            self.log(f"[SYS] Routing table updated with {len(valid)} nodes.")
+
+    def start_download(self):
+        url = self.url_edit.text().strip()
+        if not url: return self.log("[ERR] Target URL required.")
+        
+        proxies = self.valid_proxies if self.chk_use_proxy.isChecked() else []
+        self.btn_run.setEnabled(False)
+        self.btn_run.setText(">> EXECUTING... <<")
+        self.btn_run.setStyleSheet("background-color: #330000; border-color: #550000; color: #AA0000;")
+        
+        self.dt = DownloadThread(url, self.folder_edit.text(), self.r_aud.isChecked(), proxies, self.chk_playlist.isChecked())
+        self.dt.progress.connect(self.log)
+        self.dt.finished.connect(self.on_dl_finished)
+        self.dt.start()
+
+    def on_dl_finished(self, success, msg):
+        self.log(msg)
+        self.btn_run.setEnabled(True)
+        self.btn_run.setText(">> INITIALIZE DOWNLOAD SEQUENCE <<")
+        self.btn_run.setStyleSheet("""
+            QPushButton { font-size: 14pt; background-color: #001100; border: 2px solid #00FF00; letter-spacing: 3px; }
+            QPushButton:hover { background-color: #00FF00; color: #000; }
+        """)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    win = MainWindow()
+    win.show()
+    sys.exit(app.exec())

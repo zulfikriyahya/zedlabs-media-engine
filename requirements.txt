@@ -3,3 +3,4 @@ colorama
 pandas
 requests
 certifi
+PyQt6
