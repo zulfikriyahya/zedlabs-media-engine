@@ -4,7 +4,7 @@
 
 <div align="center">
 <img
-  src="./screenshoot/dashboard_main.png"
+  src="./images/dashboard_main.png"
   alt="ZEDLABS.ID Media Engine Dashboard"
 />
 </div>
@@ -15,7 +15,7 @@
 
 <div align="center">
 <img
-  src="./screenshoot/dashboard_main.png"
+  src="./images/dashboard_main.png"
   alt="ZEDLABS.ID Media Engine Dashboard"
 />
 </div>
@@ -26,7 +26,7 @@ _Antarmuka terpusat dengan kontrol input di kiri dan monitoring sistem di kanan.
 
 <div align="center">
 <img
-  src="./screenshoot/proxy_scan.png"
+  src="./images/proxy_scan.png"
   alt="ZEDLABS.ID Media Engine Dashboard"
 />
 </div>
@@ -37,7 +37,7 @@ _Pemindaian proxy multi-threaded dengan visualisasi latensi real-time._
 
 <div align="center">
 <img
-  src="./screenshoot/download_process.png"
+  src="./images/download_process.png"
   alt="ZEDLABS.ID Media Engine Dashboard"
 />
 </div>
