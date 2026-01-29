@@ -1,2 +1,5 @@
 hasil
 venv
+dist
+build
+*.spec

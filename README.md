@@ -13,31 +13,49 @@
 
 ### Main Dashboard (Command Center)
 
-[Tampilan Utama Aplikasi](./screenshoot/dashboard_main.png)
+<div align="center">
+<img
+  src="./screenshoot/dashboard_main.png"
+  alt="ZEDLABS.ID Media Engine Dashboard"
+/>
+</div>
+
 _Antarmuka terpusat dengan kontrol input di kiri dan monitoring sistem di kanan._
 
 ### Network Node Scanner
 
-[Fitur Scanning Proxy](./screenshoot/proxy_scan.png)
+<div align="center">
+<img
+  src="./screenshoot/proxy_scan.png"
+  alt="ZEDLABS.ID Media Engine Dashboard"
+/>
+</div>
+
 _Pemindaian proxy multi-threaded dengan visualisasi latensi real-time._
 
 ### Process Monitor
 
-[Proses Download](./screenshoot/download_process.png)
+<div align="center">
+<img
+  src="./screenshoot/download_process.png"
+  alt="ZEDLABS.ID Media Engine Dashboard"
+/>
+</div>
+
 _Kernel Log live dan status unduhan batch._
 
 ---
 
 ## Fitur Utama
 
-### 🖥️ Antarmuka & Pengalaman (GUI)
+### Antarmuka & Pengalaman (GUI)
 
 - **Cyberpunk Dashboard Design**: Tata letak modern dengan skema warna _High-Contrast_ (Black/Neon Green).
 - **Split-View Layout**: Kolom kiri untuk konfigurasi target, kolom kanan untuk monitoring sistem.
 - **Fixed Compact Size**: Jendela aplikasi terkunci pada ukuran optimal (900x650) untuk kerapian visual.
 - **Kernel Log System**: Jendela log real-time yang menampilkan aktivitas internal mesin.
 
-### 🚀 Mesin Unduhan (Core Engine)
+### Mesin Unduhan (Core Engine)
 
 - **Universal Support**: Mendukung YouTube, TikTok, Instagram, Twitter/X, dan 1000+ situs lainnya.
 - **Dual-Mode Extraction**:
@@ -45,7 +63,7 @@ _Kernel Log live dan status unduhan batch._
   - **AUDIO (MP3)**: Ekstraksi audio murni (320kbps) dengan post-processing FFmpeg.
 - **Smart Playlist Detection**: Deteksi otomatis URL playlist/batch dan opsi untuk memaksakan mode playlist.
 
-### 🛡️ Jaringan & Anonimitas
+### Jaringan & Anonimitas
 
 - **Advanced Proxy Scanner**: Menguji ratusan proxy dalam hitungan detik menggunakan _Concurrent Threading_.
 - **Latency Visualization**: Menampilkan status "Node" (Proxy) dengan indikator warna berdasarkan kecepatan (Hijau/Kuning/Merah).
