@@ -177,14 +177,14 @@ pyinstaller --onefile --windowed --add-binary "ffmpeg.exe;." --name="ZedLabsMedi
 **Opsi 1: Standar (Mengandalkan FFmpeg Sistem)**
 
 ```bash
-pyinstaller --onefile --windowed --name="ZedLabsMediaEngine" main.py
+pyinstaller --onefile --windowed --name="ZedLabsMediaEngine" --icon=icon.ico main.py
 ```
 
 **Opsi 2: Bundled FFmpeg (Portabel)**
 _Catatan: Pastikan binary `ffmpeg` ada di folder project._
 
 ```bash
-pyinstaller --onefile --windowed --add-binary "ffmpeg:." --name="ZedLabsMediaEngine" main.py
+pyinstaller --onefile --windowed --add-binary "ffmpeg:." --name="ZedLabsMediaEngine" --icon=icon.ico main.py
 ```
 
 ---
