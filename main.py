@@ -13,6 +13,12 @@ import requests
 import concurrent.futures
 import time
 
+def get_ffmpeg_path():
+    filename = 'ffmpeg.exe' if platform.system() == 'Windows' else 'ffmpeg'
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, filename)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
 # --- KONFIGURASI CONSTANT ---
 CHECK_URL = "https://www.google.com"
 TIMEOUT = 8
@@ -90,11 +96,14 @@ class DownloadThread(QThread):
             
             if current_proxy: self.progress.emit(f">> PROXY: {current_proxy}")
             
+            ffmpeg_path = get_ffmpeg_path() 
+
             opts = {
                 'outtmpl': os.path.join(self.folder, '%(title)s.%(ext)s'),
                 'progress_hooks': [self.progress_hook],
                 'quiet': True, 'no_warnings': True, 'retries': 5,
                 'noplaylist': not self.is_playlist,
+                'ffmpeg_location': ffmpeg_path
             }
             if current_proxy: opts['proxy'] = current_proxy
             
