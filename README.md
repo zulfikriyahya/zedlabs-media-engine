@@ -202,13 +202,13 @@ Script ini akan otomatis:
 4. Build executable dengan PyInstaller
 5. Bundle ffmpeg ke dalam aplikasi
 
-**Output:** File executable akan ada di folder `dist/MultimediaDownloader`
+**Output:** File executable akan ada di folder `dist/Multimedia Downloader`
 
 **Cara menjalankan:**
 
 ```bash
 cd dist
-./MultimediaDownloader
+"./Multimedia Downloader"
 ```
 
 ### Build di Windows 11
