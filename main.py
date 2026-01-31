@@ -372,7 +372,7 @@ class MainWindow(QMainWindow):
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║   >> SYSTEM : MEDIA DOWNLOADER ENGINE | VER : 2.0.0 | DEV : YAHYA ZULFIKRI   ║
 ║                                                                              ║
-║            UNIVERSAL VIDEO & AUDIO EXTRACTION ENGINE + QUALITY CONTROL       ║
+║          UNIVERSAL VIDEO & AUDIO EXTRACTION ENGINE + QUALITY CONTROL         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
         lbl_header = QLabel(ascii_banner)
