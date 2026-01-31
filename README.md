@@ -94,7 +94,7 @@ cd zedlabs-media-engine
 **2. Buat dan aktifkan virtual environment (Disarankan)**
 
 ```bash
-python -m venv venv
+python3 -m venv venv
 
 # Windows
 venv\Scripts\activate
@@ -126,7 +126,7 @@ Jika belum terinstal, download dari [ffmpeg.org](https://ffmpeg.org/download.htm
 Jalankan aplikasi dengan perintah:
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 ### Panduan Dashboard
