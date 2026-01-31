@@ -240,7 +240,7 @@ Script ini akan otomatis:
 4. Build executable dengan PyInstaller
 5. Bundle ffmpeg.exe ke dalam aplikasi
 
-**Output:** File executable akan ada di folder `dist\MultimediaDownloader.exe`
+**Output:** File executable akan ada di folder `dist\Multimedia Downloader.exe`
 
 **Catatan untuk Windows:**
 
@@ -259,7 +259,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 pyinstaller --onefile --windowed \
   --add-binary "lib/ffmpeg:." \
-  --name "MultimediaDownloader" \
+  --name "Multimedia Downloader" \
   --icon=images/icon.ico \
   main.py
 ```
@@ -271,7 +271,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 pyinstaller --onefile --windowed ^
   --add-binary "lib\ffmpeg.exe;." ^
-  --name "MultimediaDownloader" ^
+  --name "Multimedia Downloader" ^
   --icon=images\icon.ico ^
   main.py
 ```
