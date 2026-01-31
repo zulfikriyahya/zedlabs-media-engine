@@ -2,10 +2,10 @@ import sys
 import os
 import platform
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                             QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                             QTextEdit, QRadioButton, QButtonGroup, QFileDialog,
-                             QProgressBar, QGroupBox, QCheckBox, QTableWidget,
-                             QTableWidgetItem, QHeaderView, QFrame, QGridLayout)
+                            QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                            QTextEdit, QRadioButton, QButtonGroup, QFileDialog,
+                            QProgressBar, QGroupBox, QCheckBox, QTableWidget,
+                            QTableWidgetItem, QHeaderView, QFrame, QGridLayout)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QTextCursor
 import yt_dlp
@@ -40,7 +40,7 @@ class ProxyTestThread(QThread):
         try:
             start = time.time()
             response = requests.get(CHECK_URL, proxies=proxies_dict, timeout=TIMEOUT,
-                                  headers={'User-Agent': 'Mozilla/5.0'})
+                                    headers={'User-Agent': 'Mozilla/5.0'})
             if response.status_code == 200:
                 latency = (time.time() - start) * 1000
                 return {'proxy': proxy, 'latency': latency, 'status': 'OK'}
@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ZEDLABS.ID :: MEDIA DOWNLOADER ENGINE")
-        self.setFixedSize(640, 720) # Lebar 640px, Tinggi 720px (Fixed)
+        self.setFixedSize(720, 720) # Lebar 720px, Tinggi 720px (Fixed)
         
         self.proxies = []
         self.valid_proxies = []
@@ -286,8 +286,9 @@ class MainWindow(QMainWindow):
         l_target.addWidget(self.url_edit)
         
         h_folder = QHBoxLayout()
-        self.folder_edit = QLineEdit("downloads")
-        btn_browse = QPushButton("...")
+        self.folder_edit = QLineEdit("")
+        self.folder_edit.setPlaceholderText("Select Output Path...")
+        btn_browse = QPushButton("➭➭➭")
         btn_browse.setFixedWidth(40)
         btn_browse.clicked.connect(self.browse_folder)
         h_folder.addWidget(self.folder_edit)
@@ -321,8 +322,9 @@ class MainWindow(QMainWindow):
         grp_proxy = QGroupBox("NETWORK ROUTING")
         l_proxy = QVBoxLayout()
         h_pfile = QHBoxLayout()
-        self.proxy_edit = QLineEdit("proxy.csv")
-        btn_p_browse = QPushButton("...")
+        self.proxy_edit = QLineEdit("")
+        self.proxy_edit.setPlaceholderText("Select Proxy File...")
+        btn_p_browse = QPushButton("➭➭➭")
         btn_p_browse.setFixedWidth(40)
         btn_p_browse.clicked.connect(self.browse_proxy_file)
         h_pfile.addWidget(self.proxy_edit)

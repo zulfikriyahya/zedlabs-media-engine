@@ -184,7 +184,7 @@ pyinstaller --onefile --windowed --name="ZedLabsMediaEngine" --icon=icon.ico mai
 _Catatan: Pastikan binary `ffmpeg` ada di folder project._
 
 ```bash
-pyinstaller --onefile --windowed --add-binary "ffmpeg:." --name="ZedLabsMediaEngine" --icon=icon.ico main.py
+pyinstaller --onefile --windowed --add-binary "ffmpeg:." --name="ZedLabsMediaEngine" --icon=images/icon.ico main.py
 ```
 
 ---

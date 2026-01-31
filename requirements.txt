@@ -4,3 +4,4 @@ pandas
 requests
 certifi
 PyQt6
+pyinstaller
